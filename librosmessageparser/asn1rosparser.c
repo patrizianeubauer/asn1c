@@ -23,7 +23,7 @@ typedef enum {
 } print_method_e;
 static print_method_e print_method_;
 
-    /* Pedantically check fwrite's return value. */
+/* Pedantically check fwrite's return value. */
 static size_t safe_fwrite(const void *ptr, size_t size) {
     size_t ret;
 
@@ -187,7 +187,28 @@ static int asn1write_with_syntax(const asn1p_wsyntx_t *wx, enum asn1write_flags 
     return 0;
 }
 
+const char * asn1p_constraint_string(const asn1p_constraint_t *ct) {
+    size_t old_len = all_output_.length;
+    print_method_e old_method = print_method_;
+    print_method_ = GLOBAL_BUFFER;
+    asn1write_constraint(NULL, ct, APF_WRITE_ROS_MESSAGE);
+    print_method_ = old_method;
+    return &all_output_.buffer[old_len];
+}
+
+static int asn1write_module(asn1p_t *asn, asn1p_module_t *mod,
+                 enum asn1write_flags flags) {
+    asn1p_expr_t *tc;
+
+    TQ_FOR(tc, &(mod->members), next) {
+        asn1write_expr(asn, mod, tc, flags, 0);
+    }
+
+    return 0;
+}
+
 static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct, enum asn1write_flags flags) {
+    int symno = 0;
     int perhaps_subconstraints = 0;
 
     if(ct == 0) return 0;
@@ -259,18 +280,18 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
         case ACT_CT_FROM:
             switch(ct->type) {
             case ACT_CT_SIZE:
-            if(strcmp(dataTypeHelp, "octetstring") == 0) {
-                strcat(everythingText, "#size(");
-                asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
-                strcat(everythingText, ")\n");
-            } else if(strcmp(dataTypeHelp, "sequenceof") == 0) {
-                strcat(followingTextSequenceOf, "#size(");
-                asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
-                strcat(followingTextSequenceOf, ")\n");
-            }
-            break;
-        default:
-            break;
+                if(strcmp(dataTypeHelp, "octetstring") == 0) {
+                    strcat(everythingText, "#size(");
+                    asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
+                    strcat(everythingText, ")\n");
+                } else if(strcmp(dataTypeHelp, "sequenceof") == 0) {
+                    strcat(followingTextSequenceOf, "#size(");
+                    asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
+                    strcat(followingTextSequenceOf, ")\n");
+                }
+                break;
+            default:
+                break;
             }
             break;
         case ACT_CT_WCOMP:
@@ -394,7 +415,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
     }
 
     if((tc->Identifier &&  (!(tc->meta_type == AMT_VALUE && tc->expr_type == A1TC_REFERENCE) && (level == 0 || level == 1)))) {
-         if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "bool") == 0) {
+        if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "bool") == 0) {
             strcat(everythingText, "bool ");
             strcat(everythingText, toUpperIdentifier(identifierHelp));
             strcat(everythingText, "_");
@@ -710,9 +731,9 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                         toFormatString(tc->Identifier, false, true);
                     }
                     strcat(everythingText, "\n");
-               }
-               tcHelp = tc;
-               asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                }
+                tcHelp = tc;
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
             } else {
                 if(tc->reference) {
                     char number[20];
@@ -746,396 +767,396 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             }
         }
     } else if(tc->Identifier && tc->Identifier[0] != '.') {
-            /* Wenn z.B. in einer Sequence für ein Attribut eine Liste von weiteren Attributen vorhanden ist. */
-            if(tc->reference) {
-                if(choiceCheck) {
-                    char number[20];
-                    sprintf(number, "%d", containerCount);
-                    strcat(everythingText, "int64 ");
-                    strcat(everythingText, identifierForContainer);
-                    strcat(everythingText, "_");
-                    asn1write_ref_toUpperForEverythingText(tc->reference, flags, level);
-                    strcat(everythingText, " = ");
-                    strcat(everythingText, number);
-                    strcat(everythingText, "\n");
-                    containerCount++;
-                    sprintf(number, "%d", containerCount-1);
-                    strcat(containerText, "\n# container ");
-                    strcat(containerText, number);
-                    strcat(containerText, "\n");
-                    asn1write_ref_container(tc->reference, flags, level);
-                    strcat(containerText, " ");
-                    toFormatString(tc->Identifier, false, false);
-                    strcat(containerText, "\n");
-                } else {
-                    if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                        if(level > 0) strcat(everythingText, "\n");
-                        strcat(everythingText, "# Optional Field\nbool ");
-                        strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                        strcat(everythingText, "_present 0");
-                        strcat(everythingText, "\n");
-                    }
-
-                    if(!sequenceEnd) {
-                        asn1write_ref(tc->reference, flags, level);
-                        strcat(everythingText, " ");
-                        toFormatString(tc->Identifier, false, true);
-                    } else {
-                        if(strcmp(dataTypeHelp, "sequence") == 0) {
-                            strcat(everythingText, "\n");
-                            asn1write_ref(tc->reference, flags, level);
-                            strcat(everythingText, " ");
-                            toFormatString(tc->Identifier, false, true);
-                        } else {
-                            if(!choiceCheck) {
-                                strcat(everythingText, dataTypeHelp);
-                                strcat(everythingText, " ");
-                                asn1write_ref_toUpperWithFormat(tc->reference, flags, level);
-                                strcat(everythingText, "_");
-                                toFormatString(tc->Identifier, true, true);
-                                strcat(everythingText, " = ");
-
-                                if(tc->value) {
-                                    asn1write_value(tc->value, flags);
-                                }
-                            } else {
-                                char number[20];
-                                sprintf(number, "%d", containerCount);
-                                strcat(everythingText, "int64 ");
-                                strcat(everythingText, identifierForContainer);
-                                strcat(everythingText, "_");
-                                choiceCheck = false;
-                                toUpperIdentifierForEverythingText(tc->Identifier);
-                                choiceCheck = true;
-                                strcat(everythingText, " = ");
-                                strcat(everythingText, number);
-                                strcat(everythingText, "\n");
-                                containerCount++;
-                                sprintf(number, "%d", containerCount-1);
-                                strcat(containerText, "\n# container ");
-                                strcat(containerText, number);
-                                strcat(containerText, "\n");
-
-                                strcat(containerText, "int64 ");
-                                toFormatString(tc->Identifier, false, false);
-                                strcat(containerText, "\n");
-                            }
-                        }
-                    }
-                    strcat(everythingText, "\n");
-                }
-            } else if(tc->expr_type == ASN_CONSTR_CHOICE) {
-                if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-
-                if(level > 0) strcat(everythingText, "\n");
+        /* Wenn z.B. in einer Sequence für ein Attribut eine Liste von weiteren Attributen vorhanden ist. */
+        if(tc->reference) {
+            if(choiceCheck) {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, identifierForContainer);
+                strcat(everythingText, "_");
+                asn1write_ref_toUpperForEverythingText(tc->reference, flags, level);
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+                asn1write_ref_container(tc->reference, flags, level);
+                strcat(containerText, " ");
+                toFormatString(tc->Identifier, false, false);
+                strcat(containerText, "\n");
+            } else {
                 if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
                     if(level > 0) strcat(everythingText, "\n");
                     strcat(everythingText, "# Optional Field\nbool ");
-                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(identifierForSequenceRegion));
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
                     strcat(everythingText, "_present 0");
                     strcat(everythingText, "\n");
                 }
 
-                strcat(everythingText, "# CHOICE! - Choose exactly of the containers\nint64 ");
-                strcat(everythingText, toLowerIdentifier(identifierForContainer));
-                strcat(everythingText, "_container_select 0\n");
-                strcpy(dataTypeHelp, "int64");
-                choiceCheck = true;
-                choiceEnd = false;
-                strcat(everythingText, "int64 ");
-                strcat(everythingText, identifierForContainer);
-                strcat(everythingText, "_NOTHING = 0\n");
-                containerCount++;
-                } else if(strcmp(dataTypeHelp, "enumerated") == 0 && counterEnumerated > 0) {
-                    if(!choiceCheck) toFormatString(tc->Identifier, true, false);
-                    if(!choiceCheck) {
-                        if(tc->Identifier) {
-                            strcat(everythingText, "int64 ");
-                            strcat(everythingText, toUpperIdentifier(identifierHelp));
-                            strcat(everythingText, "_");
-                            toFormatString(tc->Identifier, true, true);
-                            strcat(everythingText, " = ");
-
-                            if(tc->value) {
-                                asn1write_value(tc->value, flags);
-                            } else {
-                                sprintf(counterCharEnumerated, "%d", counterEnumerated);
-                                strcat(everythingText, counterCharEnumerated);
-                                counterEnumerated++;
-                            }
-
-                            strcat(everythingText, "\n");
-                        }
-                    } else {
-                        char number[20];
-                        sprintf(number, "%d", containerCount);
-                        strcat(everythingText, "int64 ");
-                        toFormatString(tc->Identifier, true, true);
-
-                        strcat(everythingText, "_");
-                        choiceCheck = false;
-                        toUpperIdentifierForEverythingText(tc->Identifier);
-                        choiceCheck = true;
-                        strcat(everythingText, " = ");
-                        strcat(everythingText, number);
-                        strcat(everythingText, "\n");
-                        containerCount++;
-                        sprintf(number, "%d", containerCount-1);
-                    }
-                } else if(tc->expr_type == ASN_BASIC_OCTET_STRING) {
-                    if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-                    strcpy(dataTypeHelp, "octetstring");
-                    check = true;
-
-                    if(!choiceCheck) {
-                        if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
-                        if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                            if(level > 0) strcat(everythingText, "\n");
-                            strcat(everythingText, "# Optional Field\nbool ");
-                            strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                            strcat(everythingText, "_present 0");
-                            strcat(everythingText, "\n");
-                        }
-
-                        strcat(everythingText, "int64[] ");
-                        toFormatString(tc->Identifier, false, true);
-                        strcat(everythingText, " ");
-                        asn1write_constraint(tc->Identifier, tc->constraints, flags);
-                        strcat(everythingText, "\n");
-                    } else {
-                        char number[20];
-                        sprintf(number, "%d", containerCount);
-                        strcat(everythingText, "int64 ");
-                        strcat(everythingText, identifierForContainer);
-                        strcat(everythingText, "_");
-                        choiceCheck = false;
-                        toUpperIdentifierForEverythingText(tc->Identifier);
-                        choiceCheck = true;
-                        strcat(everythingText, " = ");
-                        strcat(everythingText, number);
-                        strcat(everythingText, "\n");
-                        containerCount++;
-                        sprintf(number, "%d", containerCount-1);
-                        strcat(containerText, "\n# container ");
-                        strcat(containerText, number);
-                        strcat(containerText, "\n");
-
-                        strcat(containerText, "int64 ");
-                        toFormatString(tc->Identifier, false, false);
-                        strcat(containerText, "\n");
-                    }
-                } else if(tc->expr_type == ASN_BASIC_ENUMERATED && counterEnumerated == 0) {
-                    if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-                    strcpy(dataTypeHelp, "enumerated");
-
-                    if(!choiceCheck) {
-                        if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
-                        if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                            if(level > 0) strcat(everythingText, "\n");
-                            strcat(everythingText, "# Optional Field\nbool ");
-                            strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                            strcat(everythingText, "_present 0");
-                            strcat(everythingText, "\n");
-                        }
-
-                        if(tc->reference) {
-                            strcat(everythingText, "\nint64 ");
-                            toFormatString(tc->reference->components[0].name, false, true);
-                            strcat(everythingText, "\n");
-                        } else {
-                            strcat(everythingText, "\nint64 ");
-                            toFormatString(tc->Identifier, false, true);
-                            strcat(everythingText, "\n");
-                        }
-
-                        counterEnumerated = 1;
-                    } else {
-                        char number[20];
-                        sprintf(number, "%d", containerCount);
-                        strcat(everythingText, "int64 ");
-                        toFormatString(tc->Identifier, true, true);
-
-                        strcat(everythingText, "_");
-                        choiceCheck = false;
-                        toUpperIdentifierForEverythingText(tc->Identifier);
-                        choiceCheck = true;
-                        strcat(everythingText, " = ");
-                        strcat(everythingText, number);
-                        strcat(everythingText, "\n");
-                        containerCount++;
-                        sprintf(number, "%d", containerCount-1);
-                        strcat(containerText, "\n# container ");
-                        strcat(containerText, number);
-                        strcat(containerText, "\n");
-
-                        strcat(containerText, "int64 ");
-                        toFormatString(tc->Identifier, false, false);
-                        strcat(containerText, "\n");
-                    }
-
-                } else if(counterEnumerated > 0) {
-                    if(!choiceCheck) {
-                        toFormatString(tc->Identifier, false, false);
-
-                        if(tc->Identifier) {
-                            strcat(everythingText, "int64 ");
-                            strcat(everythingText, toUpperIdentifier(identifierHelp));
-                            strcat(everythingText, "_");
-                            toFormatString(tc->Identifier, true, true);
-                            strcat(everythingText, " = ");
-
-                            if(tc->value) {
-                                asn1write_value(tc->value, flags);
-                            } else {
-                                sprintf(counterCharEnumerated, "%d", counterEnumerated);
-                                strcat(everythingText, counterCharEnumerated);
-                                counterEnumerated++;
-                            }
-
-                            strcat(everythingText, "\n");
-                        }
-                    }
-                } else if(!sequenceEnd && strcmp(dataTypeHelp, "enumerated") != 0 && tc->reference && tc->expr_type != ASN_CONSTR_CHOICE) {
-                    if(tc->value) if(tc->value->type == ATV_INTEGER) strcpy(dataTypeHelp, "int64");
-                    if(tc->value) if(tc->value->type == ATV_STRING || tc->value->type == ASN_STRING_UTF8String || tc->value->type == ASN_STRING_IA5String) strcpy(dataTypeHelp, "string");
-
-                    if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
-                    if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                        if(level > 0) strcat(everythingText, "\n");
-                        strcat(everythingText, "# Optional Field\nbool ");
-                        strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                        strcat(everythingText, "_present 0");
-                        strcat(everythingText, "\n");
-                    }
-                    strcat(everythingText, "\n");
-                    strcat(everythingText, dataTypeHelp);
+                if(!sequenceEnd) {
+                    asn1write_ref(tc->reference, flags, level);
                     strcat(everythingText, " ");
                     toFormatString(tc->Identifier, false, true);
-                    strcat(everythingText, "\n");
-                    asn1write_constraint(tc->Identifier, tc->constraints, flags);
-                } else if(tc->expr_type == ASN_BASIC_INTEGER) {
-                    if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-                    strcpy(dataTypeHelp, "int64");
-                    check = true;
-
-                    if(!choiceCheck) {
-                        if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
-                        if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                            if(level > 0) strcat(everythingText, "\n");
-                            strcat(everythingText, "# Optional Field\nbool ");
-                            strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                            strcat(everythingText, "_present 0");
-                            strcat(everythingText, "\n");
-                        }
-                        strcat(everythingText, dataTypeHelp);
-                        strcat(everythingText, " ");
-                        toFormatString(tc->Identifier, false, true);
-                        strcat(everythingText, "\n");
-                        tcHelp = tc;
-                        asn1write_constraint(tc->Identifier, tc->constraints, flags);
-                    } else {
-                        char number[20];
-                        sprintf(number, "%d", containerCount);
-                        strcat(everythingText, "int64 ");
-                        strcat(everythingText, identifierForContainer);
-                        strcat(everythingText, "_");
-                        choiceCheck = false;
-                        toUpperIdentifierForEverythingText(tc->Identifier);
-                        choiceCheck = true;
-                        strcat(everythingText, " = ");
-                        strcat(everythingText, number);
-                        strcat(everythingText, "\n");
-                        containerCount++;
-                        sprintf(number, "%d", containerCount-1);
-                        strcat(containerText, "\n# container ");
-                        strcat(containerText, number);
-                        strcat(containerText, "\n");
-
-                        strcat(containerText, "int64 ");
-                        toFormatString(tc->Identifier, false, false);
-                        strcat(containerText, "\n");
-                    }
-
-                    if(sequenceEnd) {
-                        strcpy(dataTypeHelp, "sequence");
-                    }
-                } else if(sequenceEnd) {
-                    strcpy(dataTypeHelp, "sequence");
-                } else if(strcmp(dataTypeHelp, "enumerated") == 0) {
-                    if(tc->Identifier) {
-                        strcat(everythingText, "int64 ");
-                        strcat(everythingText, toUpperIdentifier(identifierHelp));
-                        strcat(everythingText, "_");
-                        toFormatString(tc->Identifier, true, true);
-                        strcat(everythingText, " = ");
-
-                        if(tc->value) {
-                            asn1write_value(tc->value, flags);
-                        } else {
-                            sprintf(counterCharEnumerated, "%d", counterEnumerated);
-                            strcat(everythingText, counterCharEnumerated);
-                            counterEnumerated++;
-                        }
-
-                        strcat(everythingText, "\n");
-                    }
-                } else if(strcmp(dataTypeHelp, "octetstring") == 0) {
-                    if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-                    strcpy(dataTypeHelp, "octetstring");
-                    check = true;
-
-                    if(!choiceCheck) {
-                        if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
-                        if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
-                            if(level > 0) strcat(everythingText, "\n");
-                            strcat(everythingText, "# Optional Field\nbool ");
-                            strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
-                            strcat(everythingText, "_present 0");
-                            strcat(everythingText, "\n");
-                        }
-
-                        strcat(everythingText, "int64[] ");
-                        toFormatString(tc->Identifier, false, true);
-                        strcat(everythingText, " ");
-                        asn1write_constraint(tc->Identifier, tc->constraints, flags);
-                        strcat(everythingText, "\n");
-                    } else {
-                        char number[20];
-                        sprintf(number, "%d", containerCount);
-                        strcat(everythingText, "int64 ");
-                        strcat(everythingText, identifierForContainer);
-                        strcat(everythingText, "_");
-                        choiceCheck = false;
-                        toUpperIdentifierForEverythingText(tc->Identifier);
-                        choiceCheck = true;
-                        strcat(everythingText, " = ");
-                        strcat(everythingText, number);
-                        strcat(everythingText, "\n");
-                        containerCount++;
-                        sprintf(number, "%d", containerCount-1);
-                        strcat(containerText, "\n# container ");
-                        strcat(containerText, number);
-                        strcat(containerText, "\n");
-
-                        strcat(containerText, "int64 ");
-                        toFormatString(tc->Identifier, false, false);
-                    }
                 } else {
-                    strcat(everythingText, dataTypeHelp);
-                    strcat(everythingText, " ");
-                    toFormatString(identifierHelp, true, true);
+                    if(strcmp(dataTypeHelp, "sequence") == 0) {
+                        strcat(everythingText, "\n");
+                        asn1write_ref(tc->reference, flags, level);
+                        strcat(everythingText, " ");
+                        toFormatString(tc->Identifier, false, true);
+                    } else {
+                        if(!choiceCheck) {
+                            strcat(everythingText, dataTypeHelp);
+                            strcat(everythingText, " ");
+                            asn1write_ref_toUpperWithFormat(tc->reference, flags, level);
+                            strcat(everythingText, "_");
+                            toFormatString(tc->Identifier, true, true);
+                            strcat(everythingText, " = ");
+
+                            if(tc->value) {
+                                asn1write_value(tc->value, flags);
+                            }
+                        } else {
+                            char number[20];
+                            sprintf(number, "%d", containerCount);
+                            strcat(everythingText, "int64 ");
+                            strcat(everythingText, identifierForContainer);
+                            strcat(everythingText, "_");
+                            choiceCheck = false;
+                            toUpperIdentifierForEverythingText(tc->Identifier);
+                            choiceCheck = true;
+                            strcat(everythingText, " = ");
+                            strcat(everythingText, number);
+                            strcat(everythingText, "\n");
+                            containerCount++;
+                            sprintf(number, "%d", containerCount-1);
+                            strcat(containerText, "\n# container ");
+                            strcat(containerText, number);
+                            strcat(containerText, "\n");
+
+                            strcat(containerText, "int64 ");
+                            toFormatString(tc->Identifier, false, false);
+                            strcat(containerText, "\n");
+                        }
+                    }
+                }
+                strcat(everythingText, "\n");
+            }
+        } else if(tc->expr_type == ASN_CONSTR_CHOICE) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+
+            if(level > 0) strcat(everythingText, "\n");
+            if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                if(level > 0) strcat(everythingText, "\n");
+                strcat(everythingText, "# Optional Field\nbool ");
+                strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(identifierForSequenceRegion));
+                strcat(everythingText, "_present 0");
+                strcat(everythingText, "\n");
+            }
+
+            strcat(everythingText, "# CHOICE! - Choose exactly of the containers\nint64 ");
+            strcat(everythingText, toLowerIdentifier(identifierForContainer));
+            strcat(everythingText, "_container_select 0\n");
+            strcpy(dataTypeHelp, "int64");
+            choiceCheck = true;
+            choiceEnd = false;
+            strcat(everythingText, "int64 ");
+            strcat(everythingText, identifierForContainer);
+            strcat(everythingText, "_NOTHING = 0\n");
+            containerCount++;
+        } else if(strcmp(dataTypeHelp, "enumerated") == 0 && counterEnumerated > 0) {
+            if(!choiceCheck) toFormatString(tc->Identifier, true, false);
+            if(!choiceCheck) {
+                if(tc->Identifier) {
+                    strcat(everythingText, "int64 ");
+                    strcat(everythingText, toUpperIdentifier(identifierHelp));
                     strcat(everythingText, "_");
                     toFormatString(tc->Identifier, true, true);
                     strcat(everythingText, " = ");
+
                     if(tc->value) {
                         asn1write_value(tc->value, flags);
                     } else {
-                        asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                        sprintf(counterCharEnumerated, "%d", counterEnumerated);
+                        strcat(everythingText, counterCharEnumerated);
+                        counterEnumerated++;
+                    }
+
+                    strcat(everythingText, "\n");
+                }
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                toFormatString(tc->Identifier, true, true);
+
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+            }
+        } else if(tc->expr_type == ASN_BASIC_OCTET_STRING) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+            strcpy(dataTypeHelp, "octetstring");
+            check = true;
+
+            if(!choiceCheck) {
+                if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+                if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                    if(level > 0) strcat(everythingText, "\n");
+                    strcat(everythingText, "# Optional Field\nbool ");
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                    strcat(everythingText, "_present 0");
+                    strcat(everythingText, "\n");
+                }
+
+                strcat(everythingText, "int64[] ");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, " ");
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                strcat(everythingText, "\n");
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, identifierForContainer);
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+
+                strcat(containerText, "int64 ");
+                toFormatString(tc->Identifier, false, false);
+                strcat(containerText, "\n");
+            }
+        } else if(tc->expr_type == ASN_BASIC_ENUMERATED && counterEnumerated == 0) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+            strcpy(dataTypeHelp, "enumerated");
+
+            if(!choiceCheck) {
+                if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+                if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                    if(level > 0) strcat(everythingText, "\n");
+                    strcat(everythingText, "# Optional Field\nbool ");
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                    strcat(everythingText, "_present 0");
+                    strcat(everythingText, "\n");
+                }
+
+                if(tc->reference) {
+                    strcat(everythingText, "\nint64 ");
+                    toFormatString(tc->reference->components[0].name, false, true);
+                    strcat(everythingText, "\n");
+                } else {
+                    strcat(everythingText, "\nint64 ");
+                    toFormatString(tc->Identifier, false, true);
+                    strcat(everythingText, "\n");
+                }
+
+                counterEnumerated = 1;
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                toFormatString(tc->Identifier, true, true);
+
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+
+                strcat(containerText, "int64 ");
+                toFormatString(tc->Identifier, false, false);
+                strcat(containerText, "\n");
+            }
+
+        } else if(counterEnumerated > 0) {
+            if(!choiceCheck) {
+                toFormatString(tc->Identifier, false, false);
+
+                if(tc->Identifier) {
+                    strcat(everythingText, "int64 ");
+                    strcat(everythingText, toUpperIdentifier(identifierHelp));
+                    strcat(everythingText, "_");
+                    toFormatString(tc->Identifier, true, true);
+                    strcat(everythingText, " = ");
+
+                    if(tc->value) {
+                        asn1write_value(tc->value, flags);
+                    } else {
+                        sprintf(counterCharEnumerated, "%d", counterEnumerated);
+                        strcat(everythingText, counterCharEnumerated);
+                        counterEnumerated++;
                     }
 
                     strcat(everythingText, "\n");
                 }
             }
+        } else if(!sequenceEnd && strcmp(dataTypeHelp, "enumerated") != 0 && tc->reference && tc->expr_type != ASN_CONSTR_CHOICE) {
+            if(tc->value) if(tc->value->type == ATV_INTEGER) strcpy(dataTypeHelp, "int64");
+            if(tc->value) if(tc->value->type == ATV_STRING || tc->value->type == ASN_STRING_UTF8String || tc->value->type == ASN_STRING_IA5String) strcpy(dataTypeHelp, "string");
+
+            if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+            if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                if(level > 0) strcat(everythingText, "\n");
+                strcat(everythingText, "# Optional Field\nbool ");
+                strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                strcat(everythingText, "_present 0");
+                strcat(everythingText, "\n");
+            }
+            strcat(everythingText, "\n");
+            strcat(everythingText, dataTypeHelp);
+            strcat(everythingText, " ");
+            toFormatString(tc->Identifier, false, true);
+            strcat(everythingText, "\n");
+            asn1write_constraint(tc->Identifier, tc->constraints, flags);
+        } else if(tc->expr_type == ASN_BASIC_INTEGER) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+            strcpy(dataTypeHelp, "int64");
+            check = true;
+
+            if(!choiceCheck) {
+                if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+                if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                    if(level > 0) strcat(everythingText, "\n");
+                    strcat(everythingText, "# Optional Field\nbool ");
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                    strcat(everythingText, "_present 0");
+                    strcat(everythingText, "\n");
+                }
+                strcat(everythingText, dataTypeHelp);
+                strcat(everythingText, " ");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, "\n");
+                tcHelp = tc;
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, identifierForContainer);
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+
+                strcat(containerText, "int64 ");
+                toFormatString(tc->Identifier, false, false);
+                strcat(containerText, "\n");
+            }
+
+            if(sequenceEnd) {
+                strcpy(dataTypeHelp, "sequence");
+            }
+        } else if(sequenceEnd) {
+            strcpy(dataTypeHelp, "sequence");
+        } else if(strcmp(dataTypeHelp, "enumerated") == 0) {
+            if(tc->Identifier) {
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, toUpperIdentifier(identifierHelp));
+                strcat(everythingText, "_");
+                toFormatString(tc->Identifier, true, true);
+                strcat(everythingText, " = ");
+
+                if(tc->value) {
+                    asn1write_value(tc->value, flags);
+                } else {
+                    sprintf(counterCharEnumerated, "%d", counterEnumerated);
+                    strcat(everythingText, counterCharEnumerated);
+                    counterEnumerated++;
+                }
+
+                strcat(everythingText, "\n");
+            }
+        } else if(strcmp(dataTypeHelp, "octetstring") == 0) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+            strcpy(dataTypeHelp, "octetstring");
+            check = true;
+
+            if(!choiceCheck) {
+                if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+                if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                    if(level > 0) strcat(everythingText, "\n");
+                    strcat(everythingText, "# Optional Field\nbool ");
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                    strcat(everythingText, "_present 0");
+                    strcat(everythingText, "\n");
+                }
+
+                strcat(everythingText, "int64[] ");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, " ");
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                strcat(everythingText, "\n");
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, identifierForContainer);
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+
+                strcat(containerText, "int64 ");
+                toFormatString(tc->Identifier, false, false);
+            }
+        } else {
+            strcat(everythingText, dataTypeHelp);
+            strcat(everythingText, " ");
+            toFormatString(identifierHelp, true, true);
+            strcat(everythingText, "_");
+            toFormatString(tc->Identifier, true, true);
+            strcat(everythingText, " = ");
+            if(tc->value) {
+                asn1write_value(tc->value, flags);
+            } else {
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            }
+
+            strcat(everythingText, "\n");
+        }
+    }
 
 
     if(TQ_FIRST(&(tc->members))
@@ -1531,54 +1552,54 @@ static void toUpperIdentifierForSequenceOf(char * stringTypeOne) {
 static void toFormattedSequenceOf(asn1p_expr_t *tc, enum asn1write_flags flags, bool regionalCheck, int level) {
     char identifierString [100];
 
-        if(regionalCheck) {
-            strcpy(identifierString, "Reg");
-            strcat(identifierString, identifierHelp);
-            strcpy(followingTextSequenceOf, "");
-            strcat(followingTextSequenceOf, identifierString);
-            strcat(followingTextSequenceOf, "[] ");
-            if(tc->Identifier) strcat(followingTextSequenceOf, tc->Identifier);
-        } else {
-            int j = 0, minusIndex;
-            for(int i = 0; i < strlen(tc->Identifier); i++) {
-                if(tc->Identifier[i] != '-') {
-                    identifierString[j] = tc->Identifier[i];
-                    j++;
-                } else {
-                    minusIndex = i;
-                }
-            }
-            identifierString[j] = '\0';
-
-            struct counter * ct = toSplitIdentifier(identifierString);
-
-            if(ct->namesCounter > 1) {
-                char * stringTypeOne = malloc(ct->index + 1);
-                strncpy(stringTypeOne, identifierString, ct->index);
-                stringTypeOne[ct->index] = '\0';
-
-                strcat(followingTextSequenceOf, "[] ");
-
-                char * stringTypeTwo = malloc(strlen(identifierString) - ct->index + 1);
-                strncpy(stringTypeTwo, identifierString + ct->index, strlen(identifierString) - ct->index);
-                stringTypeTwo[strlen(identifierString) - ct->index] = '\0';
-                stringTypeTwo = toLowerIdentifier(stringTypeTwo);
-                strcat(followingTextSequenceOf, stringTypeTwo);
-                free(stringTypeTwo);
-                free(stringTypeOne);
+    if(regionalCheck) {
+        strcpy(identifierString, "Reg");
+        strcat(identifierString, identifierHelp);
+        strcpy(followingTextSequenceOf, "");
+        strcat(followingTextSequenceOf, identifierString);
+        strcat(followingTextSequenceOf, "[] ");
+        if(tc->Identifier) strcat(followingTextSequenceOf, tc->Identifier);
+    } else {
+        int j = 0, minusIndex;
+        for(int i = 0; i < strlen(tc->Identifier); i++) {
+            if(tc->Identifier[i] != '-') {
+                identifierString[j] = tc->Identifier[i];
+                j++;
             } else {
-                strcat(followingTextSequenceOf, "[] ");
-                strcat(followingTextSequenceOf, toLowerIdentifier(identifierString));
+                minusIndex = i;
             }
+        }
+        identifierString[j] = '\0';
 
+        struct counter * ct = toSplitIdentifier(identifierString);
 
+        if(ct->namesCounter > 1) {
+            char * stringTypeOne = malloc(ct->index + 1);
+            strncpy(stringTypeOne, identifierString, ct->index);
+            stringTypeOne[ct->index] = '\0';
+
+            strcat(followingTextSequenceOf, "[] ");
+
+            char * stringTypeTwo = malloc(strlen(identifierString) - ct->index + 1);
+            strncpy(stringTypeTwo, identifierString + ct->index, strlen(identifierString) - ct->index);
+            stringTypeTwo[strlen(identifierString) - ct->index] = '\0';
+            stringTypeTwo = toLowerIdentifier(stringTypeTwo);
+            strcat(followingTextSequenceOf, stringTypeTwo);
+            free(stringTypeTwo);
+            free(stringTypeOne);
+        } else {
+            strcat(followingTextSequenceOf, "[] ");
+            strcat(followingTextSequenceOf, toLowerIdentifier(identifierString));
         }
 
-        strcat(followingTextSequenceOf, " ");
 
-        if(tc->lhs_params) {
-            asn1write_params(tc->lhs_params, flags);
-        }
+    }
+
+    strcat(followingTextSequenceOf, " ");
+
+    if(tc->lhs_params) {
+        asn1write_params(tc->lhs_params, flags);
+    }
 
     check = true;
 }
