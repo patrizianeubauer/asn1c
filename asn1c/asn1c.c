@@ -36,6 +36,7 @@
 
 #include <asn1parser.h>   /* Parse the ASN.1 file and build a tree */
 #include <asn1fix.h>      /* Fix the ASN.1 tree */
+#include <asn1rosparser.h> /* Generate ROS Message */
 #include <asn1print.h>    /* Print the ASN.1 tree */
 #include <asn1compiler.h> /* Compile the ASN.1 tree */
 #include <asn1fix_export.h>
@@ -59,10 +60,13 @@ main(int ac, char **av) {
     enum asn1c_flags asn1_compiler_flags =
         A1C_NO_C99 | A1C_GEN_OER | A1C_GEN_PER | A1C_GEN_EXAMPLE;
     enum asn1print_flags asn1_printer_flags = APF_NOFLAGS;
+    enum asn1print_flags asn1_ros_flags = APF_GENERATE_ROS_MESSAGE;
     int print_arg__print_out = 0;   /* Don't compile, just print parsed */
     int print_arg__fix_n_print = 0; /* Fix and print */
+    int write_ros_message = 0;
     int warnings_as_errors = 0;     /* Treat warnings as errors */
     char *skeletons_dir = NULL;     /* Directory with supplementary stuff */
+    char *path = NULL;
     char *destdir = NULL;           /* Destination for generated files */
     char **debug_type_names = 0;    /* Debug stuff */
     size_t debug_type_names_count = 0;
@@ -152,7 +156,11 @@ main(int ac, char **av) {
             }
             break;
         case 'g':
-            if(strcmp(optarg, "en-PER") == 0) {
+            if(strcmp(optarg, "enerate-ros-message") == 0) {
+                asn1_ros_flags = APF_GENERATE_ROS_MESSAGE;
+                path = av[2];
+                write_ros_message = 1;
+            } else if(strcmp(optarg, "en-PER") == 0) {
                 asn1_compiler_flags |= A1C_GEN_PER;
             } else if(strcmp(optarg, "en-OER") == 0) {
                 asn1_compiler_flags |= A1C_GEN_OER;
@@ -245,7 +253,7 @@ main(int ac, char **av) {
         case 'X':
             print_arg__print_out = 1;   /* Implicit -E */
             print_arg__fix_n_print = 1; /* Implicit -F */
-            asn1_printer_flags |= APF_PRINT_XML_DTD;
+            //asn1_printer_flags |= APF_PRINT_XML_DTD;
             break;
         default:
             usage(av[0]);
@@ -349,6 +357,14 @@ main(int ac, char **av) {
     /* These are mostly notes for the human readers */
     assert(asn);
     assert(skeletons_dir);
+
+    if(print_arg__print_out && !print_arg__fix_n_print && write_ros_message) {
+        if(asn1write(asn, (enum asn1write_flags)APF_GENERATE_ROS_MESSAGE, path)) {
+            exit_code = EX_SOFTWARE;
+            goto cleanup;
+        }
+        return 0;
+    }
 
     /*
      * Dump the parsed ASN.1 tree if -E specified and -F is NOT given.
@@ -578,6 +594,7 @@ usage(const char *av0) {
 "  -print-class-matrix   Print out the collected object class matrix (debug)\n"
 "  -print-constraints    Explain subtype constraints (debug)\n"
 "  -print-lines          Generate \"-- #line\" comments in -E output\n"
+"  -generate-ros-message Generate ROS Message\n"
 
 	,
 	a1c_basename(av0, NULL), DATADIR);

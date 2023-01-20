@@ -97,6 +97,8 @@ enum asn1c_flags {
 	 * -debug-output-origin-lines
 	 */
 	A1C_DEBUG_OUTPUT_ORIGIN_LINES = 0x400000,
+
+
 };
 
 /*
