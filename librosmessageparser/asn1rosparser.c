@@ -1213,15 +1213,9 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
 
         char header [50000];
         strcpy(header, "#\n"
-               "# Created by script of Patrizia Neubauer (https://github.com/patrizianeubauer)\n"
-               "# Date: ");
-
-        time_t now;
-        now = time(0);
-
-        strcat(header, ctime(&now));
-
-        strcat(header, "# Generated with ROS-Parser from vehicleCAPTAIN Toolbox (https://github.com/virtual-vehicle/vehicle_captain_asn1_parser)\n"
+               "# Generated with ROS-Parser from vehicleCAPTAIN Toolbox (https://github.com/virtual-vehicle/vehicle_captain_asn1_parser)\n"
+               "# Copyright: Patrizia Neubauer (https://github.com/patrizianeubauer)\n"
+               "# \n"
                "\n\n");
 
         strcat(header, everythingText);
