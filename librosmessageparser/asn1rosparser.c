@@ -471,7 +471,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             }
 
             strcat(everythingText, "\n");
-        } else if(tc->expr_type == ASN_BASIC_INTEGER || tc->expr_type == ASN_BASIC_OBJECT_IDENTIFIER || tc->expr_type == ASN_BASIC_BIT_STRING) {
+        } else if(tc->expr_type == ASN_BASIC_INTEGER || tc->expr_type == ASN_BASIC_OBJECT_IDENTIFIER) {
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
             strcpy(dataTypeHelp, "int64");
             check = true;
@@ -490,6 +490,45 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 strcat(everythingText, " ");
                 toFormatString(tc->Identifier, false, true);
                 strcat(everythingText, "\n");
+                tcHelp = tc;
+                asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            } else {
+                char number[20];
+                sprintf(number, "%d", containerCount);
+                strcat(everythingText, "int64 ");
+                strcat(everythingText, identifierForContainer);
+                strcat(everythingText, "_");
+                choiceCheck = false;
+                toUpperIdentifierForEverythingText(tc->Identifier);
+                choiceCheck = true;
+                strcat(everythingText, " = ");
+                strcat(everythingText, number);
+                strcat(everythingText, "\n");
+                containerCount++;
+                sprintf(number, "%d", containerCount-1);
+                strcat(containerText, "\n# container ");
+                strcat(containerText, number);
+                strcat(containerText, "\n");
+
+                strcat(containerText, "int64 ");
+                toFormatString(tc->Identifier, false, false);
+                strcat(containerText, "\n");
+            }
+        } else if(tc->expr_type == ASN_BASIC_BIT_STRING) {
+            if(!choiceCheck) toFormatString(tc->Identifier, false, false);
+            strcpy(dataTypeHelp, "bool");
+            check = true;
+
+            if(!choiceCheck) {
+                if(((tc->marker.flags & EM_OPTIONAL) != EM_OPTIONAL) && level >= 1) strcat(everythingText, "\n");
+                if((tc->marker.flags & EM_OPTIONAL) == EM_OPTIONAL) {
+                    if(level > 0) strcat(everythingText, "\n");
+                    strcat(everythingText, "# Optional Field\nbool ");
+                    strcat(everythingText, toFormatAndLowerIdentifierForOptionalField(tc->Identifier));
+                    strcat(everythingText, "_present 0");
+                    strcat(everythingText, "\n");
+                }
+
                 tcHelp = tc;
                 asn1write_constraint(tc->Identifier, tc->constraints, flags);
             } else {
