@@ -45,6 +45,7 @@ static bool sequenceEnd = false;
 static bool checkAllUpper = false;
 static char followingTextSequenceOf[10000];
 static bool isSequenceOf = false;
+static bool isBitString = false;
 
 struct counter {
     int index;

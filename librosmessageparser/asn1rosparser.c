@@ -277,6 +277,9 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
             }
         case ACT_EL_EXT: break;
         case ACT_CT_SIZE:
+            if(isBitString) {
+                asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
+            }
         case ACT_CT_FROM:
             switch(ct->type) {
             case ACT_CT_SIZE:
@@ -399,7 +402,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
     int has_space = 0;
     char counterCharEnumerated[100];
 
-    char *p = ASN_EXPR_TYPE2STR(tc->expr_type);
+    char* p = ASN_EXPR_TYPE2STR(tc->expr_type);
     FILE *fp;
 
     if(level == 0) {
@@ -415,6 +418,9 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
     }
 
     if((tc->Identifier &&  (!(tc->meta_type == AMT_VALUE && tc->expr_type == A1TC_REFERENCE) && (level == 0 || level == 1)))) {
+        if(isBitString) {
+            strcat(everythingText, "#");
+        }
         if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "bool") == 0) {
             strcat(everythingText, "bool ");
             strcat(everythingText, toUpperIdentifier(identifierHelp));
@@ -515,8 +521,9 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 strcat(containerText, "\n");
             }
         } else if(tc->expr_type == ASN_BASIC_BIT_STRING) {
+            isBitString = true;
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
-            strcpy(dataTypeHelp, "bool");
+            strcpy(dataTypeHelp, "int64");
             check = true;
 
             if(!choiceCheck) {
@@ -530,7 +537,19 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 }
 
                 tcHelp = tc;
+                strcat(everythingText, "uint8[] ");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, "_buf\n");
+
+                strcat(everythingText, "int64 ");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, "_bits_unused\n");
+
+                strcat(everythingText, "int64 ");
+                toFormatString(tc->Identifier, true, true);
+                strcat(everythingText, "_SIZE = ");
                 asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                strcat(everythingText, "\n");
             } else {
                 char number[20];
                 sprintf(number, "%d", containerCount);
@@ -1197,7 +1216,6 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
         }
     }
 
-
     if(TQ_FIRST(&(tc->members))
        || (tc->expr_type & ASN_CONSTR_MASK)
        || tc->meta_type == AMT_OBJECT
@@ -1219,6 +1237,8 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             choiceEnd = true;
             sequenceEnd = true;
             counterEnumerated = 0;
+
+            isBitString = false;
         }
     }
 
@@ -1417,6 +1437,8 @@ static void toFormatString(char * identifierChar, bool toUpper, bool toPrint) {
                 strcat(helpAllIdentifier, toCharArrayOne);
             }
         }
+
+        if(isBitString) strcat(helpAllIdentifier, "_BIT");
 
         if(toUpper && toPrint && !choiceCheck) {
             strcat(everythingText, toUpperIdentifier(helpAllIdentifier));
