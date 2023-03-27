@@ -226,10 +226,12 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
                 strcat(everythingText, "int64 ");
                 toFormatString(asn1p_expr_s, true, true);
                 strcat(everythingText, "_SIZE = ");
+                asn1write_value(ct->value, flags);
+                strcat(everythingText, "\n");
+            } else {
+                asn1write_value(ct->value, flags);
             }
 
-            asn1write_value(ct->value, flags);
-            strcat(everythingText, "\n");
             perhaps_subconstraints = 1;
             break;
         case ACT_EL_RANGE:
