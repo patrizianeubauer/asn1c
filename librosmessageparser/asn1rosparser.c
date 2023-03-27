@@ -229,6 +229,7 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
             }
 
             asn1write_value(ct->value, flags);
+            strcat(everythingText, "\n");
             perhaps_subconstraints = 1;
             break;
         case ACT_EL_RANGE:
