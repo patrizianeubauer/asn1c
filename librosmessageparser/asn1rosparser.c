@@ -223,14 +223,23 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
             if(strcmp(dataTypeHelp, "octetstring") == 0) {
                 strcat(everythingText, "1..");
             } else if(isBitString) {
-                strcat(everythingText, " = ");
+                strcat(everythingText, "int64 ");
+                toFormatString(asn1p_expr_s, true, true);
+                strcat(everythingText, "_SIZE = ");
             }
 
             asn1write_value(ct->value, flags);
             perhaps_subconstraints = 1;
             break;
         case ACT_EL_RANGE:
-            if(isBitString) strcat(everythingText, "\n");
+            if(isBitString) {
+                strcat(everythingText, "int64 ");
+                toFormatString(asn1p_expr_s, false, true);
+                strcat(everythingText, "_size");
+
+                //asn1write_constraint(tc->Identifier, tc->constraints, flags);
+                strcat(everythingText, "\n");
+            }
         case ACT_EL_LLRANGE:
         case ACT_EL_RLRANGE:
         case ACT_EL_ULRANGE:
@@ -548,12 +557,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 toFormatString(tc->Identifier, false, true);
                 strcat(everythingText, "_bits_unused\n");
 
-                strcat(everythingText, "int64 ");
-                toFormatString(tc->Identifier, false, true);
-                strcat(everythingText, "_size");
-
                 asn1write_constraint(tc->Identifier, tc->constraints, flags);
-                strcat(everythingText, "\n");
             } else {
                 char number[20];
                 sprintf(number, "%d", containerCount);
