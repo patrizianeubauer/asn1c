@@ -214,6 +214,10 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
     if(ct == 0) return 0;
 
     if(!choiceCheck) {
+        /*char helpas [2000];
+        int a = ct->type;
+        sprintf(helpas, " %d ", a);
+        strcat(everythingText, helpas);*/
         switch(ct->type) {
         case ACT_EL_TYPE:
             asn1write_value(ct->containedSubtype, flags);
@@ -222,12 +226,15 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
         case ACT_EL_VALUE:
             if(strcmp(dataTypeHelp, "octetstring") == 0) {
                 strcat(everythingText, "1..");
+            } else if(isBitString) {
+                strcat(everythingText, " = ");
             }
 
             asn1write_value(ct->value, flags);
             perhaps_subconstraints = 1;
             break;
         case ACT_EL_RANGE:
+            if(isBitString) strcat(everythingText, "\n");
         case ACT_EL_LLRANGE:
         case ACT_EL_RLRANGE:
         case ACT_EL_ULRANGE:
@@ -277,9 +284,7 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
             }
         case ACT_EL_EXT: break;
         case ACT_CT_SIZE:
-            if(isBitString) {
-                asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
-            }
+            asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
         case ACT_CT_FROM:
             switch(ct->type) {
             case ACT_CT_SIZE:
@@ -549,7 +554,8 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
 
                 strcat(everythingText, "int64 ");
                 toFormatString(tc->Identifier, true, true);
-                strcat(everythingText, "_SIZE = ");
+                strcat(everythingText, "_SIZE");
+
                 asn1write_constraint(tc->Identifier, tc->constraints, flags);
                 strcat(everythingText, "\n");
             } else {
@@ -947,7 +953,8 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
 
             strcat(everythingText, "int64 ");
             toFormatString(tc->Identifier, true, true);
-            strcat(everythingText, "_SIZE = ");
+            strcat(everythingText, "_SIZE");
+
             asn1write_constraint(tc->Identifier, tc->constraints, flags);
             strcat(everythingText, "\n");
             isBitString = false;
