@@ -418,9 +418,6 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
     }
 
     if((tc->Identifier &&  (!(tc->meta_type == AMT_VALUE && tc->expr_type == A1TC_REFERENCE) && (level == 0 || level == 1)))) {
-        if(isBitString) {
-            strcat(everythingText, "#");
-        }
         if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "bool") == 0) {
             strcat(everythingText, "bool ");
             strcat(everythingText, toUpperIdentifier(identifierHelp));
@@ -433,6 +430,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             }
 
             strcat(everythingText, "\n");
+            isBitString = false;
         } else if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "string") == 0) {
             strcat(everythingText, "string ");
             strcat(everythingText, toUpperIdentifier(identifierHelp));
@@ -445,6 +443,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             }
 
             strcat(everythingText, "\n");
+            isBitString = false;
         } else if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "enumerated") == 0) {
             if(tc->Identifier) {
                 strcat(everythingText, "int64 ");
@@ -463,8 +462,10 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
 
                 strcat(everythingText, "\n");
             }
+            isBitString = false;
         } else if(tc->expr_type == A1TC_UNIVERVAL && strcmp(dataTypeHelp, "int64") == 0) {
-            strcat(everythingText, "int64 ");
+            if(isBitString) strcat(everythingText, "# int64 ");
+            else strcat(everythingText, "int64 ");
             strcat(everythingText, toUpperIdentifier(identifierHelp));
             strcat(everythingText, "_");
             toFormatString(tc->Identifier, true, true);
@@ -520,6 +521,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 toFormatString(tc->Identifier, false, false);
                 strcat(containerText, "\n");
             }
+            isBitString = false;
         } else if(tc->expr_type == ASN_BASIC_BIT_STRING) {
             isBitString = true;
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
@@ -615,6 +617,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 toFormatString(tc->Identifier, false, false);
                 strcat(containerText, "\n");
             }
+            isBitString = false;
         } else if(tc->expr_type == ASN_STRING_NumericString
                   || tc->expr_type == ASN_STRING_IA5String
                   || tc->expr_type == ASN_STRING_UTF8String
@@ -637,6 +640,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             strcat(everythingText, "\n");
             tcHelp = tc;
             asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            isBitString = false;
         } else if(tc->expr_type == ASN_BASIC_OCTET_STRING) {
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
             strcpy(dataTypeHelp, "octetstring");
@@ -679,6 +683,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 toFormatString(tc->Identifier, false, false);
                 strcat(containerText, "\n");
             }
+            isBitString = false;
         } else if(tc->expr_type == ASN_BASIC_BOOLEAN) {
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
             strcpy(dataTypeHelp, "bool");
@@ -698,6 +703,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             strcat(everythingText, "\n");
             tcHelp = tc;
             asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            isBitString = false;
         } else if(tc->expr_type == ASN_CONSTR_SEQUENCE) {
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
             strcpy(dataTypeHelp, "sequence");
@@ -708,6 +714,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 strcpy(identifierForSequenceRegion, tc->Identifier);
                 identifierForSequenceRegion[strlen(identifierForSequenceRegion)] = '\0';
             }
+            isBitString = false;
         } else if(tc->expr_type == ASN_CONSTR_SEQUENCE_OF) {
             SEQ_OF = 1;
             isSequenceOf = true;
@@ -746,6 +753,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             }
             asn1write_constraint(tc->Identifier, tc->constraints, flags);
             check = true;
+            isBitString = false;
         } else if (tc->expr_type == ASN_CONSTR_CHOICE) {
             if(!choiceCheck) toFormatString(tc->Identifier, false, false);
 
@@ -768,6 +776,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             strcat(everythingText, identifierForContainer);
             strcat(everythingText, "_NOTHING = 0\n");
             containerCount++;
+            isBitString = false;
         } else {
             if(!choiceCheck) {
                 toFormatString(tc->Identifier, false, false);
@@ -823,6 +832,7 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                     strcat(containerText, "\n");
                 }
             }
+            isBitString = false;
         }
     } else if(tc->Identifier && tc->Identifier[0] != '.') {
         /* Wenn z.B. in einer Sequence für ein Attribut eine Liste von weiteren Attributen vorhanden ist. */
@@ -925,6 +935,22 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
             strcat(everythingText, identifierForContainer);
             strcat(everythingText, "_NOTHING = 0\n");
             containerCount++;
+        } else if(tc->expr_type == ASN_BASIC_BIT_STRING) {
+            isBitString = true;
+            strcat(everythingText, "uint8[] ");
+            toFormatString(tc->Identifier, false, true);
+            strcat(everythingText, "_buf\n");
+
+            strcat(everythingText, "int64 ");
+            toFormatString(tc->Identifier, false, true);
+            strcat(everythingText, "_bits_unused\n");
+
+            strcat(everythingText, "int64 ");
+            toFormatString(tc->Identifier, true, true);
+            strcat(everythingText, "_SIZE = ");
+            asn1write_constraint(tc->Identifier, tc->constraints, flags);
+            strcat(everythingText, "\n");
+            isBitString = false;
         } else if(strcmp(dataTypeHelp, "enumerated") == 0 && counterEnumerated > 0) {
             if(!choiceCheck) toFormatString(tc->Identifier, true, false);
             if(!choiceCheck) {
