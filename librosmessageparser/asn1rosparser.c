@@ -214,10 +214,6 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
     if(ct == 0) return 0;
 
     if(!choiceCheck) {
-        /*char helpas [2000];
-        int a = ct->type;
-        sprintf(helpas, " %d ", a);
-        strcat(everythingText, helpas);*/
         switch(ct->type) {
         case ACT_EL_TYPE:
             asn1write_value(ct->containedSubtype, flags);
