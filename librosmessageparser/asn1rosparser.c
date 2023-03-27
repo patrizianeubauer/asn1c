@@ -549,8 +549,8 @@ static int asn1write_expr(asn1p_t *asn, asn1p_module_t *mod, asn1p_expr_t *tc, e
                 strcat(everythingText, "_bits_unused\n");
 
                 strcat(everythingText, "int64 ");
-                toFormatString(tc->Identifier, true, true);
-                strcat(everythingText, "_SIZE");
+                toFormatString(tc->Identifier, false, true);
+                strcat(everythingText, "_size");
 
                 asn1write_constraint(tc->Identifier, tc->constraints, flags);
                 strcat(everythingText, "\n");
