@@ -222,6 +222,7 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
         case ACT_EL_VALUE:
             if(strcmp(dataTypeHelp, "octetstring") == 0) {
                 strcat(everythingText, "1..");
+                asn1write_value(ct->value, flags);
             } else if(isBitString) {
                 strcat(everythingText, "int64 ");
                 toFormatString(asn1p_expr_s, true, true);
