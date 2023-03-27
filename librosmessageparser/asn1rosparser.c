@@ -280,7 +280,7 @@ static int asn1write_constraint(char *asn1p_expr_s, const asn1p_constraint_t *ct
             }
         case ACT_EL_EXT: break;
         case ACT_CT_SIZE:
-            asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
+            if(isBitString) asn1write_constraint(asn1p_expr_s, ct->elements[0], flags);
         case ACT_CT_FROM:
             switch(ct->type) {
             case ACT_CT_SIZE:
