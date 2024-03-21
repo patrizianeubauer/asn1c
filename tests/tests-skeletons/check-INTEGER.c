@@ -170,10 +170,10 @@ check_64(uint8_t *buf, size_t size, int64_t check_i64, int check_ret) {
 	printf("]: ");
 
 	ret = asn_INTEGER2int64(&val, &rint64);
-	printf(" (%ld, %d) vs (%ld, %d)\n",
+	printf(" (%lld, %d) vs (%lld, %d)\n",
 		rint64, ret, check_i64, check_ret);
 	assert(ret == check_ret);
-	printf("%ld %ld\n", rint64, check_i64);
+	printf("%lld %lld\n", rint64, check_i64);
 	assert(rint64 == check_i64);
 
 	if(check_ret == 0) {
@@ -195,7 +195,7 @@ check_64(uint8_t *buf, size_t size, int64_t check_i64, int check_ret) {
 	ret = INTEGER_print(&asn_DEF_INTEGER, &val, 0, _print2buf, scratch);
 	assert(shared_scratch_start < scratch + sizeof(scratch));
 	assert(ret == 0);
-	ret = snprintf(verify, sizeof(verify), "%ld", check_i64);
+	ret = snprintf(verify, sizeof(verify), "%lld", check_i64);
 	assert(ret < 0 || (size_t)ret < sizeof(verify));
 	ret = strcmp(scratch, verify);
 	printf("         [%s] vs [%s]: %d%s\n",
@@ -232,7 +232,7 @@ check_unsigned_64(uint8_t *buf, int size, uint64_t check_u64, int check_ret) {
 	printf("]: ");
 
 	ret = asn_INTEGER2uint64(&val, &ruint64);
-	printf(" (%lu, %d) vs (%lu, %d)\n",
+	printf(" (%llu, %d) vs (%llu, %d)\n",
 		ruint64, ret, check_u64, check_ret);
 	assert(ret == check_ret);
 	assert(ruint64 == check_u64);
@@ -263,7 +263,7 @@ check_unsigned_64(uint8_t *buf, int size, uint64_t check_u64, int check_ret) {
 	ret = INTEGER_print(&asn_DEF_INTEGER, &val, 0, _print2buf, scratch);
 	assert(shared_scratch_start < scratch + sizeof(scratch));
 	assert(ret == 0);
-	ret = snprintf(verify, sizeof(verify), "%lu", check_u64);
+	ret = snprintf(verify, sizeof(verify), "%llu", check_u64);
 	assert(ret < (int)sizeof(verify));
 	ret = strcmp(scratch, verify);
 	printf("         [%s] vs [%s]: %d%s\n",
