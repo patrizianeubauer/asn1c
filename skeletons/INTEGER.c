@@ -103,10 +103,10 @@ INTEGER__dump(const asn_TYPE_descriptor_t *td, const INTEGER_t *st, asn_app_cons
 	char scratch[32];
 	uint8_t *buf = st->buf;
 	uint8_t *buf_end = st->buf + st->size;
-	intmax_t value;
+	intmax_t value = 0;
 	ssize_t wrote = 0;
-	char *p;
-	int ret;
+	char *p = NULL;
+	int ret = -1;
 
 	if(specs && specs->field_unsigned)
 		ret = asn_INTEGER2umax(st, (uintmax_t *)&value);
@@ -212,7 +212,7 @@ asn__integer_convert(const uint8_t *b, const uint8_t *end) {
 int
 asn_INTEGER2imax(const INTEGER_t *iptr, intmax_t *lptr) {
 	uint8_t *b, *end;
-	size_t size;
+	size_t size = 0;
 
 	/* Sanity checking */
 	if(!iptr || !iptr->buf || !lptr) {
@@ -324,7 +324,7 @@ asn_imax2INTEGER(INTEGER_t *st, intmax_t value) {
 	uint8_t *buf, *bp;
 	uint8_t *p;
 	uint8_t *pstart;
-	uint8_t *pend1;
+	volatile uint8_t *pend1;
 	int littleEndian = 1;	/* Run-time detection */
 	int add;
 
@@ -364,8 +364,7 @@ asn_imax2INTEGER(INTEGER_t *st, intmax_t value) {
 		break;
 	}
 	/* Copy the integer body */
-	pend1 += add;
-	for(bp = buf; p != pend1; p += add)
+	for(bp = buf, pend1 += add; p != pend1; p += add)
 		*bp++ = *p;
 
 	if(st->buf) FREEMEM(st->buf);
