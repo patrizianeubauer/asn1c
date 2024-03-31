@@ -103,7 +103,7 @@ check_unsigned(uint8_t *buf, int size, unsigned long check_long, int check_ret) 
 	printf("]: ");
 
 	ret = asn_INTEGER2ulong(&val, &rlong);
-	printf(" (%lu, %d) vs (%lu, %d)\n",
+	printf(" (%ju, %d) vs (%ju, %d)\n",
 		rlong, ret, check_long, check_ret);
 	assert(ret == check_ret);
 	assert(rlong == check_long);
@@ -134,7 +134,7 @@ check_unsigned(uint8_t *buf, int size, unsigned long check_long, int check_ret) 
 	ret = INTEGER_print(&asn_DEF_INTEGER, &val, 0, _print2buf, scratch);
 	assert(shared_scratch_start < scratch + sizeof(scratch));
 	assert(ret == 0);
-	ret = snprintf(verify, sizeof(verify), "%lu", check_long);
+	ret = snprintf(verify, sizeof(verify), "%ju", check_long);
 	assert(ret < (int)sizeof(verify));
 	ret = strcmp(scratch, verify);
 	printf("         [%s] vs [%s]: %d%s\n",
@@ -154,7 +154,7 @@ check_64(uint8_t *buf, size_t size, int64_t check_i64, int check_ret) {
 	char verify[32];
 	INTEGER_t val;
 	uint8_t *buf_end = buf + size;
-	int ret;
+	int ret = 0;
 	int64_t rint64 = 123;
 
 	assert(buf);
@@ -216,7 +216,7 @@ check_unsigned_64(uint8_t *buf, int size, uint64_t check_u64, int check_ret) {
 	char verify[32];
 	INTEGER_t val;
 	uint8_t *buf_end = buf + size;
-	int ret;
+	int ret = -1;
 	uint64_t ruint64 = 123;
 
 	assert(buf);
@@ -283,7 +283,7 @@ check_xer(int lineno, int tofail, char *xmldata, long orig_value) {
 	INTEGER_t *st = 0;
 	asn_dec_rval_t rc;
 	long value;
-	int ret;
+	int ret = -1;
 
 	printf("%03d: [%s] vs %ld: ", lineno, xmldata, orig_value);
 
@@ -314,8 +314,8 @@ static void
 check_jer(int lineno, int tofail, char *jsondata, long orig_value) {
 	INTEGER_t *st = 0;
 	asn_dec_rval_t rc;
-	long value;
-	int ret;
+	long value = 0;
+	int ret = -1;
 
 	printf("%03d: [%s] vs %ld: ", lineno, jsondata, orig_value);
     fflush(stdout);
@@ -350,9 +350,9 @@ check_strtoimax() {
     char positive_max[32];
     char negative_min[32];
     const int len_pmax = snprintf(positive_max, sizeof(positive_max),
-        "+%" ASN_PRId64, intmax_max);
+        "jd", intmax_max);
     const int len_nmin = snprintf(negative_min, sizeof(negative_min),
-        "%" ASN_PRId64, intmax_min);
+        "%jd", intmax_min);
     assert(len_pmax < (int)sizeof(positive_max));
     assert(len_nmin < (int)sizeof(negative_min));
 
