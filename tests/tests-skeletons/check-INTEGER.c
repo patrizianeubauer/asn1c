@@ -350,7 +350,7 @@ check_strtoimax() {
     char positive_max[32];
     char negative_min[32];
     const int len_pmax = snprintf(positive_max, sizeof(positive_max),
-        "jd", intmax_max);
+        "%jd", intmax_max);
     const int len_nmin = snprintf(negative_min, sizeof(negative_min),
         "%jd", intmax_min);
     assert(len_pmax < (int)sizeof(positive_max));
