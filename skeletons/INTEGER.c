@@ -322,11 +322,11 @@ asn_umax2INTEGER(INTEGER_t *st, uintmax_t value) {
 int
 asn_imax2INTEGER(INTEGER_t *st, intmax_t value) {
 	uint8_t *buf, *bp;
-	uint8_t *p;
-	uint8_t *pstart;
+	volatile uint8_t *p;
+	volatile uint8_t *pstart;
 	volatile uint8_t *pend1;
 	int littleEndian = 1;	/* Run-time detection */
-	int add;
+	volatile int add;
 
 	if(!st) {
 		errno = EINVAL;
