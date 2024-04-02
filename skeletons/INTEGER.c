@@ -469,12 +469,12 @@ asn_uint642INTEGER(INTEGER_t *st, uint64_t value) {
 
 int
 asn_int642INTEGER(INTEGER_t *st, int64_t value) {
-	uint8_t *buf, *bp;
-	uint8_t *p;
-	uint8_t *pstart;
-	uint8_t *pend1;
+	volatile uint8_t *buf, *bp;
+	volatile uint8_t *p;
+	volatile uint8_t *pstart;
+	volatile uint8_t *pend1;
 	int littleEndian = 1;	/* Run-time detection */
-	int add;
+	volatile int add;
 
 	if(!st) {
 		errno = EINVAL;
