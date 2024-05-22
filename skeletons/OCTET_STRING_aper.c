@@ -72,10 +72,8 @@ OCTET_STRING_decode_aper(const asn_codec_ctx_t *opt_codec_ctx,
     case ASN_OSUBV_ANY:
     case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
-/*
         if(cval->flags & APC_CONSTRAINED)
             unit_bits = cval->range_bits;
-*/
         bpc = OS__BPC_CHAR;
         break;
     case ASN_OSUBV_U16:
