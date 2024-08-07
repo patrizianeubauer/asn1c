@@ -252,9 +252,8 @@ static ssize_t OCTET_STRING__convert_hexadecimal(void *sptr, const void *chunk_b
     for(; p < pend; p++) {
         int ch = *(const unsigned char *)p;
         switch(ch) {
-	/* do not allow tab, space 
+	/* allow tab, space */
 	case 0x09: case 0x20: 
-         */
 	/* allow LF, FF, CR */
         case 0x0a: case 0x0c: case 0x0d: 
             continue;
