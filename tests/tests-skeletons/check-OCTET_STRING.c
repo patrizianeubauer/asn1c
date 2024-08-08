@@ -178,7 +178,8 @@ main() {
 	check_jer(HEX, "\"", 0);
 	check_jer(HEX, "", 0);
 	check_jer(HEX, "\"6869\"", "hi");
-	check_jer(HEX, "\"68 69\"", 0);
+	//check_jer(HEX, "\"68 69\"", 0); /* we want to allow space */
+    check_jer(HEX, "\"68 69\"", "hi");
 
 	check_jer(UTF8, "\"\"", "");
 	check_jer(UTF8, "\"", 0);
