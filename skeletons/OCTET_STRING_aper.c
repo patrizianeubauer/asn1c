@@ -59,16 +59,6 @@ OCTET_STRING_decode_aper(const asn_codec_ctx_t *opt_codec_ctx,
     }
 
     switch(specs->subvariant) {
-    default:
-/*
-    case ASN_OSUBV_ANY:
-        ASN_DEBUG("Unrecognized subvariant %d", specs->subvariant);
-        RETURN(RC_FAIL);
-*/
-    case ASN_OSUBV_BIT:
-        canonical_unit_bits = unit_bits = 1;
-        bpc = OS__BPC_BIT;
-        break;
     case ASN_OSUBV_ANY:
     case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
@@ -87,6 +77,16 @@ OCTET_STRING_decode_aper(const asn_codec_ctx_t *opt_codec_ctx,
         if(cval->flags & APC_CONSTRAINED)
             unit_bits = cval->range_bits;
         bpc = OS__BPC_U32;
+        break;
+/*
+    case ASN_OSUBV_ANY:
+        ASN_DEBUG("Unrecognized subvariant %d", specs->subvariant);
+        RETURN(RC_FAIL);
+*/
+    case ASN_OSUBV_BIT:
+    default:
+        canonical_unit_bits = unit_bits = 1;
+        bpc = OS__BPC_BIT;
         break;
     }
 
@@ -266,19 +266,7 @@ OCTET_STRING_encode_aper(const asn_TYPE_descriptor_t *td,
     ct_extensible = csiz->flags & APC_EXTENSIBLE;
 
     switch(specs->subvariant) {
-        default:
-/*
-        case ASN_OSUBV_ANY:
-            ASN__ENCODE_FAILED;
-*/
-        case ASN_OSUBV_BIT:
-            canonical_unit_bits = unit_bits = 1;
-            bpc = OS__BPC_BIT;
-            sizeinunits = st->size * 8 - (st->bits_unused & 0x07);
-            ASN_DEBUG("BIT STRING of %d bytes",
-                      sizeinunits);
-        break;
-        case ASN_OSUBV_ANY:
+    case ASN_OSUBV_ANY:
     case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
 /*
@@ -301,6 +289,18 @@ OCTET_STRING_encode_aper(const asn_TYPE_descriptor_t *td,
             unit_bits = cval->range_bits;
         bpc = OS__BPC_U32;
         sizeinunits = st->size / 4;
+        break;
+/*
+    case ASN_OSUBV_ANY:
+        ASN__ENCODE_FAILED;
+*/
+    case ASN_OSUBV_BIT:
+    default:
+        canonical_unit_bits = unit_bits = 1;
+        bpc = OS__BPC_BIT;
+        sizeinunits = st->size * 8 - (st->bits_unused & 0x07);
+        ASN_DEBUG("BIT STRING of %d bytes",
+                  sizeinunits);
         break;
     }
 
