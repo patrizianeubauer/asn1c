@@ -60,10 +60,17 @@ OCTET_STRING_decode_aper(const asn_codec_ctx_t *opt_codec_ctx,
 
     switch(specs->subvariant) {
     case ASN_OSUBV_ANY:
-    case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
         if(cval->flags & APC_CONSTRAINED)
-            unit_bits = cval->range_bits;
+          unit_bits = cval->range_bits; 
+        bpc = OS__BPC_CHAR;
+        break;
+    case ASN_OSUBV_STR:
+        canonical_unit_bits = unit_bits = 8;
+        /*
+        if(cval->flags & APC_CONSTRAINED)
+          unit_bits = cval->range_bits; 
+        */
         bpc = OS__BPC_CHAR;
         break;
     case ASN_OSUBV_U16:
@@ -267,10 +274,17 @@ OCTET_STRING_encode_aper(const asn_TYPE_descriptor_t *td,
 
     switch(specs->subvariant) {
     case ASN_OSUBV_ANY:
-    case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
         if(cval->flags & APC_CONSTRAINED)
-            unit_bits = cval->range_bits;
+            unit_bits = 8;
+        bpc = OS__BPC_CHAR;
+        break;
+    case ASN_OSUBV_STR:
+        canonical_unit_bits = unit_bits = 8;
+/*
+        if(cval->flags & APC_CONSTRAINED)
+            unit_bits = 8;
+*/
         bpc = OS__BPC_CHAR;
         sizeinunits = st->size;
         break;
