@@ -282,6 +282,7 @@ OCTET_STRING_encode_aper(const asn_TYPE_descriptor_t *td,
 
     switch(specs->subvariant) {
     case ASN_OSUBV_ANY:
+    case ASN_OSUBV_STR:
         canonical_unit_bits = unit_bits = 8;
         if(cval->flags & APC_CONSTRAINED) {
         	/* follow power of 2 rule */
