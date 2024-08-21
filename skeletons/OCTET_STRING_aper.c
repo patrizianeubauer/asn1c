@@ -66,13 +66,13 @@ OCTET_STRING_decode_aper(const asn_codec_ctx_t *opt_codec_ctx,
             if (cval->range_bits <= 2) {
         		unit_bits = 2;
             } else {
-        		if (cval->range_bits <= 4) {
-        	   		unit_bits = 4;
-        	   		/* otherwise, unit_bits = 8; */
-        		}
-	    	}
-            /* unit_bits = cval->range_bits; */
-            ASN_DEBUG("APER decoding ASN_OSUBV_STR range_bits = %d unit_bits = %d\n",
+        	if (cval->range_bits <= 4) {
+           		unit_bits = 4;
+           		/* otherwise, unit_bits = 8; */
+        	}
+	   }
+           /* unit_bits = cval->range_bits; */
+           ASN_DEBUG("APER decoding ASN_OSUBV_STR range_bits = %d unit_bits = %d\n",
             	cval->range_bits, unit_bits);
         }
         bpc = OS__BPC_CHAR;
@@ -292,8 +292,8 @@ OCTET_STRING_encode_aper(const asn_TYPE_descriptor_t *td,
         			unit_bits = 4;
         		/* otherwise, unit_bits = 8; */
         	}
-            /* unit_bits = cval->range_bits; */
-            ASN_DEBUG("APER encoding ASN_OSUBV_STR range_bits = %d unit_bits = %d\n", 
+            	/* unit_bits = cval->range_bits; */
+            	ASN_DEBUG("APER encoding ASN_OSUBV_STR range_bits = %d unit_bits = %d\n", 
             		cval->range_bits, unit_bits);
         }
         bpc = OS__BPC_CHAR;
