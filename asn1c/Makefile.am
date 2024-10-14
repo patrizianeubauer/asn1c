@@ -7,6 +7,7 @@ AM_CPPFLAGS =                       \
     -I${top_srcdir}/libasn1parser   \
     -I${top_srcdir}/libasn1print    \
     -I${top_srcdir}/libasn1fix      \
+    -I${top_srcdir}/librosmessageparser \
     -I${top_srcdir}/skeletons       \
     -DDATADIR=\"$(pkgdatadir)\"
 
@@ -15,6 +16,7 @@ asn1c_LDADD =                                           \
     $(top_builddir)/libasn1parser/libasn1parser.la      \
     $(top_builddir)/libasn1print/libasn1print.la        \
     $(top_builddir)/libasn1fix/libasn1fix.la            \
+    $(top_builddir)/librosmessageparser/librosmessageparser.la        \
     $(top_builddir)/libasn1compiler/libasn1compiler.la
 
 bin_PROGRAMS = asn1c

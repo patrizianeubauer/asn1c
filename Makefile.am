@@ -7,7 +7,7 @@ CODE_COVERAGE_IGNORE_PATTERN="tests/*" "lex.yy.c" "y.tab.c" "asn1p_l.l" "asn1p_y
 SUBDIRS =                       \
     libasn1common libasn1parser \
     libasn1fix libasn1print     \
-    libasn1compiler             \
+    libasn1compiler librosmessageparser \
     asn1-tools asn1c skeletons  \
     tests examples doc
 

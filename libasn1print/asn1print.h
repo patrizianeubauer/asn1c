@@ -8,6 +8,7 @@ enum asn1print_flags {
 	APF_PRINT_XML_DTD	= 0x04,	/* Generate XML DTD */
 	APF_PRINT_CONSTRAINTS	= 0x08,	/* Explain constraints */
 	APF_PRINT_CLASS_MATRIX	= 0x10,	/* Dump class matrix */
+    APF_GENERATE_ROS_MESSAGE	= 0x10,	/* Dump class matrix */
 };
 
 /*
@@ -15,6 +16,6 @@ enum asn1print_flags {
  */
 int asn1print(asn1p_t *asn, enum asn1print_flags flags);
 
-const char *asn1p_constraint_string(const asn1p_constraint_t *ct);
+//const char *asn1p_constraint_string(const asn1p_constraint_t *ct);
 
 #endif	/* ASN1PRINT_H */

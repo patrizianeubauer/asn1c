@@ -308,6 +308,7 @@ libasn1compiler/Makefile                    \
 libasn1common/Makefile                      \
 libasn1parser/Makefile                      \
 libasn1print/Makefile                       \
+librosmessageparser/Makefile                \
 libasn1fix/Makefile                         \
 doc/docsrc/Makefile                         \
 skeletons/Makefile                          \
